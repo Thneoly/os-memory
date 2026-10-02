@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "subtitle": "What your device remembers, in one place",
+  "description": "The shared-memory hub: pinned entries you keep, grouped by where they came from, exportable any time. Apps that declare an agent can have their knowledge synced here through the system assistant, with your approval. Works fully without an assistant; the assistant lane shows what it holds when one is present.",
+  "category": "productivity",
+  "keywords": ["memory", "knowledge", "sync", "notes"],
+  "screenshots": ["screenshots/01-main.png"],
+  "icon": "assets/icon.svg",
+  "platforms": ["windows"],
+  "publisher": {
+    "name": "Replace with your publisher name",
+    "support": "https://example.com/support",
+    "privacy_policy_url": "https://example.com/privacy"
+  },
+  "release_notes": "First version: pinned memory with grouping, add/remove, export, restart persistence, honest assistant lane.",
+  "age_rating": "all",
+  "license": "Apache-2.0"
+}

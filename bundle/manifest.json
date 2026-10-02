@@ -1,0 +1,19 @@
+{
+  "agent": {
+    "profile": "read-only"
+  },
+  "capabilities": [
+    "storage",
+    "octos.session.open",
+    "octos.turn.start",
+    "octos.session.history",
+    "octos.turn.interrupt"
+  ],
+  "id": "os.memory",
+  "integrity": {
+    "bundle_blake3": "32439513012e0b69ed449b0e63575d4e3ead6301d41b152a80a4010fb9060ada"
+  },
+  "name": "Memory",
+  "schema": 1,
+  "version": "0.1.0"
+}
