@@ -3,6 +3,8 @@
 > **OctoSense 黑客松参赛项目 · 系统应用赛道**
 > 这不是 demo，这是一个**内置到设备的系统应用**。
 
+> ℹ️ **本仓库是被动 bundle**——`bundle/main.splash` 是纯脚本 + 数据；不安装 hook / 不触发浏览器跳转 / 不发起任何 HTTP 调用。你看到 `vscode.dev/github/...` 这类链接是被你本地 IDE / GitHub 扩展 / 浏览器插件打开的，不是本仓库干的。
+
 ---
 
 ## 一句话

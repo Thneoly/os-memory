@@ -5,8 +5,8 @@ cross-app memory hub. This release is local-first and offline-safe.
 
 ## Data this app stores
 
-- `memories.json` in `.local-state/os.memory/` — the user's pinned and
-  focused memory entries plus an `export.txt` snapshot.
+- `memories.json` in `.local-state/os.memory/` — the user's pinned
+  memory entries plus an `export.txt` snapshot.
 - All storage stays on-device in the system app jail allocated by
   `card-host --system` (64 MiB cap, governed by `HostLimits::system()`).
 
