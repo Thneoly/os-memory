@@ -24,13 +24,11 @@ Two kinds of memory, two stores, both shown in one app:
    chip; two sections:
    - **Pinned** (the list from `memories.json`): grouped by source
      ("Mine", "From memory-notes", …), each row is the text with a date;
-     tap to open a row menu (pin/unpin n/a here, delete); "Add" entry +
-     button at the top like the template.
+     tap to delete; "Add" entry + button at the top.
    - **From the assistant** (only when `octos.session.history` answers):
-     the agent's recent memory lines, each with a "Pin" button that
-     copies it into the pinned store; when the service is unavailable the
-     section shows the honest one-liner ("No assistant on this device —
-     pinned memory still works").
+     the agent's recent memory count; when the service is unavailable
+     the section shows the honest one-liner ("No assistant on this device
+     — pinned memory still works").
 2. **Export** — a button that writes `export.txt` (all pinned entries,
    one per line with source and date) into the jail and confirms.
 
@@ -38,8 +36,6 @@ Two kinds of memory, two stores, both shown in one app:
 
 - Add a pinned entry (text input + Add; empty ignored).
 - Delete a pinned entry (tap).
-- Pin an agent-memory line into the pinned store (button; base store
-  only grows by user action).
 - Export pinned memory to `export.txt`.
 - Restart persistence for pinned memory.
 
@@ -67,12 +63,11 @@ None. No network requests.
 ## Capabilities and why
 
 - `storage` — `memories.json` and `export.txt` in the jail.
-- `octos.session.open`, `octos.turn.start`, `octos.session.history`,
-  `octos.turn.interrupt` — talk to this app's own agent only (read its
-  memory lane; never another app's).
-- `agent` block (`"tools": ["ask_user_question"]`) — declares the app's
-  agent so the system agent can sync other apps' knowledge into it; the
-  app itself is the surface where the person allows and reviews that.
+- `octos.session.history` — read the agent's recent memory count into
+  the assistant lane; never another app's.
+- `agent` block (`profile: read-only`) — declares the app's agent so the
+  system agent can sync other apps' knowledge into it; the app itself
+  is the surface where the person allows and reviews that.
 - `glance` — **deferred to a later version** (runtime pin predates
   `sys.chat`); not requested in 0.1.0 to keep every granted capability
   map to something a screen does today.

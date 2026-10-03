@@ -7,7 +7,7 @@
 
 ## 一句话
 
-`os.memory` 是一个 `os.*` 系统应用——**不通过商店分发**，而是 ship with the device；提供 pinned memory（个人偏好/事实）+ focused memory（会话上下文）+ 导出能力，**作为跨应用记忆的汇聚点**。
+`os.memory` 是一个 `os.*` 系统应用——**不通过商店分发**，而是 ship with the device；提供 pinned memory（个人偏好/事实）+ 导出能力，**作为跨应用记忆的汇聚点**。
 
 > 📘 完整方案与三仓联合演示见 [`docs/JOINT-DEMO.md`](docs/JOINT-DEMO.md)
 
@@ -20,7 +20,7 @@
 ```
             ┌─────────────────────────────────────────┐
             │     os.memory （本仓 · 系统应用）          │
-            │   pin · focused · export · 跨 peer 读      │
+            │   pin · export · 跨 peer 读               │
             └────────▲────────────────────▲────────────┘
                      │ 写                 │ 读
    ┌────────────┐    │                    │    ┌────────────┐
@@ -29,7 +29,7 @@
    └────────────┘                              └────────────┘
 ```
 
-两个 demo（notes / digest）通过 `octos.turn.start` 写入/读取自己 peer 的内容；本应用负责**多 peer 汇聚**——这是"跨应用共享"的物理基础。
+两个 demo（notes / digest）通过 `octos.turn.start` 写入自己 peer；本应用通过 `octos.session.history` 读取多 peer 内容并**汇聚展示**——这是"跨应用共享"的物理基础。
 
 ---
 
@@ -43,24 +43,25 @@
 | 提交路径 | `card-host --system`（**不进商店**） |
 | 资源上限 | `HostLimits::system()` · **64 MiB storage** · 67,108,864 bytes |
 | Agent profile | `read-only` |
-| Capabilities | `storage` + 4× `octos.*` |
+| Capabilities | `storage` + `octos.session.history` |
 | Integrity | `bundle_blake3` 已 stamp（见 `bundle/manifest.json`） |
 | Platforms | `windows`（其他平台未验证，**不假装**） |
 
 ### 验证证据（实测）
 
-`bundle/manifest.json` 与 `.local-state/card-host.log` 三项指纹一致：
+`bundle/manifest.json` 真值（2026-10-02 重算 stamp）：
 
 ```
-card-host: stamped manifest.json with digest 32439…0ada
-card-host: os.memory 0.1.0 admitted — capabilities {4×octos.* + storage}, 
-           storage 67108864 bytes, agent read-only
-card-host: isolate jailed at .local-state\os.memory with 67108864 bytes, 
-           5 capability(ies), 1 host(s), 4000000000 instructions, 
-           134217728 bytes of heap, prompts false — all enforced
+octo check bundle --system-app
+os.memory 0.1.0 — PASSED
+  [warning] publisher-signature: unsigned
+  grants: capabilities {"octos.session.history", "storage"},
+          hosts {}, storage 67108864 bytes, agent read-only
 ```
 
 64 MiB = 67,108,864 bytes = `HostLimits::system()` 的精确额度。
+
+> `.local-state/card-host.log` 是更早一轮（cap 砍前）跑出来的，capabilities 数对不上当前 manifest；上面的 `hub check` 输出是当前真值。
 
 ---
 
@@ -122,7 +123,7 @@ os-memory/
 ├── bundle/
 │   ├── manifest.json    ← stamp manifest
 │   ├── listing.json     ← store 元数据（publisher 占位待替换）
-│   ├── main.splash      ← 主程序（142 行 · pin/focused/export 三屏）
+│   ├── main.splash      ← 主程序（142 行 · pin/export 两屏）
 │   ├── screenshots/01-main.png
 │   └── assets/icon.svg
 ├── build/

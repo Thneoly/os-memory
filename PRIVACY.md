@@ -13,11 +13,10 @@ cross-app memory hub. This release is local-first and offline-safe.
 ## Data this app requests
 
 - `storage` capability — used only for the on-device jail above.
-- Four `octos.*` host services (read-only host APIs provided by the device
-  shell): `octos.session.open`, `octos.session.history`,
-  `octos.turn.start`, `octos.turn.interrupt`. These are used to read the
-  assistant lane that lane over other apps' own agents; they do not transmit
-  user data off-device.
+- `octos.session.history` host service — read-only API that asks this
+  app's own agent how many messages it holds in its lane; the reply is
+  shown in the "From the assistant" section. It does not transmit user
+  data off-device.
 
 ## What this app does NOT do
 
@@ -30,6 +29,13 @@ cross-app memory hub. This release is local-first and offline-safe.
 ## Agent profile
 
 `read-only` — the app never asks the host to write, sign, or publish.
+
+## Honest degradation
+
+When the host has no assistant (or `octos.session.history` fails), the
+"From the assistant" section shows `No assistant on this device —
+pinned memory still works.` Pinned entries remain fully usable; the
+app does not depend on the assistant lane to function.
 
 ## Contact
 

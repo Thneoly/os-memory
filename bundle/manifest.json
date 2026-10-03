@@ -4,10 +4,7 @@
   },
   "capabilities": [
     "storage",
-    "octos.session.open",
-    "octos.turn.start",
-    "octos.session.history",
-    "octos.turn.interrupt"
+    "octos.session.history"
   ],
   "id": "os.memory",
   "integrity": {

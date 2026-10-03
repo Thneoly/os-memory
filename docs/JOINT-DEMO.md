@@ -12,7 +12,7 @@
 ```
               ┌─────────────────────────────────────────────┐
               │            os.memory (系统应用)              │
-              │   pin · focused · export · 跨 peer 读取      │
+              │   pin · export · 跨 peer 读取               │
               └────────▲────────────────────────▲───────────┘
                           │ 写入                  │ 读取
    ┌──────────────┐       │                       │       ┌──────────────┐
@@ -39,10 +39,10 @@
 |---|---|---|---|
 | 命名空间 | `os.*` 系统应用 | 商店应用 | 商店应用 |
 | 提交路径 | `card-host --system` · 64 MiB | `octo check` · 16 MiB | `octo check` · 16 MiB |
-| 关键交互 | pin / focused / export | 每条便签的 **Remember** | **Refresh** + chips |
+| 关键交互 | pin / export | 每条便签的 **Remember** | **Refresh** + chips |
 | Agent profile | `read-only` | `read-only` | `read-only` |
-| 持久化 | `memories.json`（pin/focused/export） | `notes.json` | `prefs.json` |
-| AI 失败降级 | 仍是 pin/focused | "kept locally: \<text\>" | "No assistant on this device — from your local interests" |
+| 持久化 | `memories.json`（pin/export） | `notes.json` | `prefs.json` |
+| AI 失败降级 | 仍是 pin/export | "kept locally: \<text\>" | "No assistant on this device — from your local interests" |
 | README.md | ❌ | ❌ | ❌ |
 | Packet | ✅ `build/review.json` + `REVIEW-ANSWERS.md` | ❌ | ❌ |
 
