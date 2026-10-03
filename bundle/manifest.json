@@ -6,7 +6,7 @@
     "tools": []
   },
   "capabilities": [
-    "storage",
+    "octos.turn.start",
     "octos.session.history"
   ],
   "compute": {
@@ -15,10 +15,10 @@
   },
   "id": "os.memory",
   "integrity": {
-    "bundle_blake3": "a31ac02cc729a5f8cb1f420e684ba7eaaa5b8b45052fbe1fe06779ada4e32beb",
+    "bundle_blake3": "6c3d894740c10cf305e8af0e2a1f02d18a0e380a28b65599f55221ccb1d2b74f",
     "signature": {
       "key_id": "TheOne",
-      "value": "4b7579c9ee913117b468c3fccd48c6a2714266701f2a8541f6fe2053883e5a7a1215a361884f218f515fd8587e58175b5efeb1365b1683af01f74c33ae2b2b07"
+      "value": "e5791227ae152b6673f94a27220b4bcb3d985598c2199601eef4ad381704d68fd3bc36f131af619fd510ed14a68146c68ccd4f0b77081ae7b3cabf2642862b07"
     }
   },
   "name": "Memory",

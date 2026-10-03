@@ -1,87 +1,102 @@
-let memories = []
-let next_id = 1
-let agent_state = nil
-let agent_summary = ""
-let export_note = ""
+let pins = []
+let service_ok = false
+let busy = false
+let status_text = "Loading…"
+let export_text = ""
+let export_busy = false
 
 let MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-fn load(){
-    if fs.exists("memories.json") {
-        let v = fs.read("memories.json").parse_json()
-        if v != nil {
-            memories = v
-            for i in memories.len() {
-                let n = memories[i].id.to_f64()
-                if n >= next_id { next_id = floor(n) + 1 }
-            }
-        }
-    }
-    ui.list.render()
-}
-
-fn save(){ fs.write("memories.json", memories.to_json()) }
-
-fn add(){
-    let text = ui.entry.text()
-    if text == "" { return }
-    memories.push({id: "" + next_id, source: "self", text: text, created: time_now()})
-    next_id = next_id + 1
-    ui.entry.set_text("")
-    save()
-    ui.list.render()
-}
-
-fn remove(i){
-    let kept = []
-    for j in memories.len() { if j != i { kept.push(memories[j]) } }
-    memories = kept
-    save()
-    ui.list.render()
-}
-
-fn probe(){
-    host.request("octos.session.history", {}, fn(r){
-        if r.is_ok {
-            agent_state = true
-            agent_summary = "" + r.data.messages.len() + " messages with the assistant"
-        } else {
-            agent_state = false
-            agent_summary = ""
-        }
-        ui.assistant.render()
-        ui.chip.set_text(chip_text())
-    })
-}
-
-fn chip_text(){
-    if agent_state == true { return "● assistant: on" }
-    if agent_state == false { return "○ assistant: off" }
-    return "… assistant: …"
-}
-
-fn source_label(s){
-    if s == "self" { return "MY MEMORY" }
-    return "FROM " + s
-}
 
 fn date_str(ts){
     let t = local_time(ts)
     return MONTHS[t.month - 1] + " " + t.day
 }
 
-fn export_pinned(){
-    let out = ""
-    for i in memories.len() {
-        let e = memories[i]
-        out = out + "[" + e.source + "] " + e.text + " (" + date_str(e.created) + ")\n"
-    }
-    fs.write("export.txt", out)
-    export_note = "Saved export.txt (" + memories.len() + " entries)"
-    ui.export_note.set_text(export_note)
+fn load(){
+    busy = true
+    status_text = "Loading…"
+    ui.status.set_text(status_text)
+    host.request("octos.session.history", {}, fn(r){
+        busy = false
+        if r.is_ok {
+            pins = []
+            for i in r.data.messages.len() {
+                let m = r.data.messages[i]
+                if m.role != nil {
+                    if ("" + m.role) == "user" {
+                        let raw = ""
+                        if m.text != nil { raw = "" + m.text }
+                        let rest = raw.strip_prefix("Pin: ")
+                        if rest != nil { pins.push({key: "" + i, text: "" + rest}) }
+                    }
+                }
+            }
+            service_ok = true
+            status_text = "" + pins.len() + " pinned"
+        } else {
+            service_ok = false
+            status_text = "Assistant unavailable on this device"
+        }
+        ui.status.set_text(status_text)
+        ui.list.render()
+    })
 }
 
-start_timeout(0.05, || { load() probe() })
+fn add(){
+    if busy { return }
+    let text = ui.entry.text()
+    if text == "" { return }
+    busy = true
+    ui.entry.set_text("")
+    status_text = "Sending…"
+    ui.status.set_text(status_text)
+    host.request("octos.turn.start", {text: "Pin: " + text}, fn(r){
+        busy = false
+        if r.is_ok {
+            status_text = "Pinned ✅"
+            load()
+        } else {
+            status_text = "Assistant unavailable"
+        }
+        ui.status.set_text(status_text)
+    })
+}
+
+fn remove(text){
+    if busy { return }
+    busy = true
+    status_text = "Asking assistant to unpin…"
+    ui.status.set_text(status_text)
+    host.request("octos.turn.start", {text: "Forget this pin: " + text}, fn(r){
+        busy = false
+        if r.is_ok {
+            status_text = "Removed ✅"
+            load()
+        } else {
+            status_text = "Assistant unavailable"
+        }
+        ui.status.set_text(status_text)
+    })
+}
+
+fn export_pinned(){
+    if export_busy { return }
+    if busy { return }
+    export_busy = true
+    export_text = "Asking the assistant…"
+    ui.export_note.set_text(export_text)
+    host.request("octos.turn.start", {text: "Summarize what you remember as pinned entries, one bullet per pin."}, fn(r){
+        export_busy = false
+        if r.is_ok {
+            export_text = "" + r.data.text
+        } else {
+            export_text = "Assistant unavailable on this device"
+        }
+        ui.export_note.set_text(export_text)
+    })
+}
+
+start_timeout(0.05, || load())
 
 let ink = #x1c1c1e
 let secondary = #x8e8e93
@@ -92,68 +107,52 @@ let bg = #xf2f2f7
 let card = #xffffff
 SolidView{width: Fill height: Fill flow: Down padding: 16 spacing: 12 draw_bg.color: bg
     View{width: Fill height: Fit flow: Down spacing: 4
-        View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
-            Label{width: Fill text: "🧠  Memory" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 26}}
-            chip := Label{text: chip_text() draw_text.color: secondary draw_text.text_style.font_size: 12}
-        }
-        Label{text: "Pinned memory, across this device." draw_text.color: secondary draw_text.text_style.font_size: 13}
+        Label{text: "🧠  Memory" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 26}}
+        Label{text: "Pinned view of your assistant memory." draw_text.color: secondary draw_text.text_style.font_size: 13}
+        status := Label{text: status_text draw_text.color: secondary draw_text.text_style.font_size: 12}
     }
     View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
-        entry := TextInput{width: Fill height: 44 empty_text: "Add a memory"
+        entry := TextInput{width: Fill height: 44 empty_text: "Pin a memory"
             draw_bg +: {color: #xffffff color_hover: #xffffff color_focus: accent_bg color_empty: #xffffff border_radius: 12.0}
             draw_text +: {color: ink color_hover: ink color_focus: ink color_empty: secondary color_empty_hover: secondary}}
-        ButtonFlat{text: "Add" height: 44 padding: Inset{left: 20 right: 20} on_click: || add()
+        ButtonFlat{text: "Pin" height: 44 padding: Inset{left: 20 right: 20} on_click: || add()
             draw_bg +: {border_radius: 22.0 color: accent color_hover: accent_dark color_down: #x0f1735 border_size: 0.0}
             draw_text +: {color: #xffffff color_hover: #xffffff color_down: #xffffff}}
     }
     list := ScrollYView{width: Fill height: Fill flow: Down spacing: 10 on_render: || {
-        if memories.len() == 0 {
-            SolidView{width: Fill height: Fit flow: Down padding: Inset{top: 22 bottom: 22 left: 18 right: 18} align: Align{x: 0.5 y: 0.5} draw_bg.color: card
-                Label{text: "Nothing pinned yet" draw_text.color: secondary draw_text.text_style.font_size: 14}
-                Label{text: "Pin a thought above and it stays across launches." draw_text.color: secondary draw_text.text_style.font_size: 11}
+        if service_ok == true {
+            if pins.len() == 0 {
+                SolidView{width: Fill height: Fit flow: Down padding: Inset{top: 22 bottom: 22 left:18 right:18} align: Align{x: 0.5 y: 0.5} draw_bg.color: card
+                    Label{text: "Nothing pinned yet" draw_text.color: secondary draw_text.text_style.font_size: 14}
+                    Label{text: "Pin a thought above and your assistant will remember it." draw_text.color: secondary draw_text.text_style.font_size: 11}
+                }
+            }
+            for i in pins.len() {
+                SolidView{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5} padding: Inset{top: 12 bottom: 12 left: 14 right: 8} draw_bg.color: card
+                    Label{width: Fill text: pins[i].text draw_text.color: ink draw_text.text_style.font_size: 15}
+                    ButtonFlat{text: "✕" height: 28 padding: Inset{left: 10 right: 10} on_click: || remove(pins[i].text)
+                        draw_bg +: {border_radius: 14.0 color: #xf2f2f7 color_hover: #xe5e5ea color_down: #xd1d1d6 border_size: 0.0}
+                        draw_text +: {color: secondary color_hover: ink color_down: ink}}
+                }
             }
         }
-        for i in memories.len() {
-            let j = memories.len() - 1 - i
-            if j == memories.len() - 1 {
-                Label{text: source_label(memories[j].source) draw_text.color: secondary draw_text.text_style.font_size: 10}
-            } else {
-                if memories[j].source != memories[j + 1].source {
-                    Label{text: source_label(memories[j].source) draw_text.color: secondary draw_text.text_style.font_size: 10}
-                }
-            }
-            SolidView{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5} padding: Inset{top: 12 bottom: 12 left: 14 right: 8} draw_bg.color: card
-                View{width: Fill height: Fit flow: Down spacing: 4
-                    Label{width: Fill text: memories[j].text draw_text.color: ink draw_text.text_style.font_size: 15}
-                    Label{width: Fill text: date_str(memories[j].created) draw_text.color: secondary draw_text.text_style.font_size: 11}
-                }
-                GestureView{width: Fit height: Fit on_tap: |x, y| remove(j)
-                    SolidView{width: Fit height: Fit padding: Inset{top: 4 bottom: 4 left: 10 right: 10} draw_bg.color: #xf2f2f7
-                        Label{text: "×" draw_text.color: secondary draw_text.text_style.font_size: 14}
-                    }
-                }
+        if service_ok == false {
+            SolidView{width: Fill height: Fit flow: Down padding: Inset{top: 22 bottom: 22 left:18 right:18} align: Align{x: 0.5 y: 0.5} draw_bg.color: card
+                Label{text: "Assistant unavailable" draw_text.color: ink draw_text.text_style.font_size: 14}
+                Label{text: "This app reads and writes through the device's assistant. Open it in Rinx or an OctoSense shell to test." draw_text.color: secondary draw_text.text_style.font_size: 11}
             }
         }
     }}
     RoundedView{width: Fill height: Fit flow: Down spacing: 6 padding: Inset{top: 14 bottom: 14 left: 14 right: 14} draw_bg.color: accent_bg border_radius: 14.0
-        assistant := View{width: Fill height: Fit flow: Down spacing: 4 on_render: || {
-            Label{text: "FROM THE ASSISTANT" draw_text.color: accent_dark draw_text.text_style.font_size: 10}
-            if agent_state == nil {
-                Label{text: "Checking…" draw_text.color: accent_dark draw_text.text_style.font_size: 13}
+        View{width: Fill height: Fit flow: Right spacing: 10 align: Align{y: 0.5}
+            Label{text: "EXPORT" draw_text.color: accent_dark draw_text.text_style.font_size: 10}
+            View{width: Fill height: Fit
+                ButtonFlat{text: "Ask the assistant to summarize" height: 36 padding: Inset{left: 14 right: 14} on_click: || export_pinned()
+                    draw_bg +: {border_radius: 18.0 color: accent color_hover: accent_dark color_down: #x0f1735 border_size: 0.0}
+                    draw_text +: {color: #xffffff color_hover: #xffffff color_down: #xffffff}}
             }
-            if agent_state == false {
-                Label{text: "No assistant on this device — pinned memory still works." draw_text.color: accent_dark draw_text.text_style.font_size: 13}
-            }
-            if agent_state == true {
-                Label{text: agent_summary draw_text.color: ink draw_text.text_style.font_size: 13}
-            }
-        }}
+        }
+        export_note := Label{width: Fill text: "" draw_text.color: accent_dark draw_text.text_style.font_size: 12}
     }
-    View{width: Fill height: Fit flow: Right spacing: 10 align: Align{y: 0.5}
-        ButtonFlat{text: "Export" height: 40 padding: Inset{left: 18 right: 18} on_click: || export_pinned()
-            draw_bg +: {border_radius: 20.0 color: accent color_hover: accent_dark color_down: #x0f1735 border_size: 0.0}
-            draw_text +: {color: #xffffff color_hover: #xffffff color_down: #xffffff}}
-        export_note := Label{width: Fill text: "" draw_text.color: secondary draw_text.text_style.font_size: 11}
-    }
-    Label{text: "Tap an entry to remove it. Pinned memory stays without an assistant." draw_text.color: secondary draw_text.text_style.font_size: 12}
+    Label{text: "Pins live in your assistant's memory. Tap ✕ to ask the assistant to forget one." draw_text.color: secondary draw_text.text_style.font_size: 12}
 }
