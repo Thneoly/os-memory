@@ -148,6 +148,7 @@ os-memory/
 - 比赛规则（覆盖性）：[App Hub docs/PUBLISHING.md](https://github.com/OctoSense-org/OctoSense-App-Hub/blob/main/docs/PUBLISHING.md)
 - 参赛流程：[App-Design-Flow README](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/README.zh-CN.md)
 - 联合演示：[`docs/JOINT-DEMO.md`](docs/JOINT-DEMO.md)
+- App Hub 提交包（复制粘贴用）：[`docs/SUBMISSION.md`](docs/SUBMISSION.md)
 
 ---
 
