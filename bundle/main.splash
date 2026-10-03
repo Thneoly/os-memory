@@ -55,9 +55,9 @@ fn probe(){
 }
 
 fn chip_text(){
-    if agent_state == true { return "assistant: on" }
-    if agent_state == false { return "assistant: off" }
-    return "assistant: …"
+    if agent_state == true { return "● assistant: on" }
+    if agent_state == false { return "○ assistant: off" }
+    return "… assistant: …"
 }
 
 fn source_label(s){
@@ -85,55 +85,73 @@ start_timeout(0.05, || { load() probe() })
 
 let ink = #x1c1c1e
 let secondary = #x8e8e93
-let blue = #x007aff
-SolidView{width: Fill height: Fill flow: Down padding: 16 spacing: 12 draw_bg.color: #xffffff
-    View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
-        Label{width: Fill text: "Memory" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 28}}
-        chip := Label{text: chip_text() draw_text.color: secondary draw_text.text_style.font_size: 12}
+let accent = #x2c3e83
+let accent_dark = #x1c2855
+let accent_bg = #xeef2ff
+let bg = #xf2f2f7
+let card = #xffffff
+SolidView{width: Fill height: Fill flow: Down padding: 16 spacing: 12 draw_bg.color: bg
+    View{width: Fill height: Fit flow: Down spacing: 4
+        View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
+            Label{width: Fill text: "🧠  Memory" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 26}}
+            chip := Label{text: chip_text() draw_text.color: secondary draw_text.text_style.font_size: 12}
+        }
+        Label{text: "Pinned memory, across this device." draw_text.color: secondary draw_text.text_style.font_size: 13}
     }
     View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
-        entry := TextInput{width: Fill height: 40 empty_text: "Add a memory"
-            draw_bg +: {color: #xf2f2f7 color_hover: #xf2f2f7 color_focus: #xf2f2f7 color_empty: #xf2f2f7 border_radius: 10.0}
+        entry := TextInput{width: Fill height: 44 empty_text: "Add a memory"
+            draw_bg +: {color: #xffffff color_hover: #xffffff color_focus: accent_bg color_empty: #xffffff border_radius: 12.0}
             draw_text +: {color: ink color_hover: ink color_focus: ink color_empty: secondary color_empty_hover: secondary}}
-        ButtonFlat{text: "Add" height: 40 padding: Inset{left: 18 right: 18} on_click: || add()
-            draw_bg +: {border_radius: 20.0 color: blue color_hover: #x0a84ff color_down: #x0062cc border_size: 0.0}
+        ButtonFlat{text: "Add" height: 44 padding: Inset{left: 20 right: 20} on_click: || add()
+            draw_bg +: {border_radius: 22.0 color: accent color_hover: accent_dark color_down: #x0f1735 border_size: 0.0}
             draw_text +: {color: #xffffff color_hover: #xffffff color_down: #xffffff}}
     }
-    list := ScrollYView{width: Fill height: Fill flow: Down spacing: 8 on_render: || {
+    list := ScrollYView{width: Fill height: Fill flow: Down spacing: 10 on_render: || {
         if memories.len() == 0 {
-            Label{text: "Nothing pinned yet. Add something above." draw_text.color: secondary}
+            SolidView{width: Fill height: Fit flow: Down padding: Inset{top: 22 bottom: 22 left: 18 right: 18} align: Align{x: 0.5 y: 0.5} draw_bg.color: card
+                Label{text: "Nothing pinned yet" draw_text.color: secondary draw_text.text_style.font_size: 14}
+                Label{text: "Pin a thought above and it stays across launches." draw_text.color: secondary draw_text.text_style.font_size: 11}
+            }
         }
         for i in memories.len() {
             let j = memories.len() - 1 - i
             if j == memories.len() - 1 {
-                Label{text: source_label(memories[j].source) draw_text.color: secondary draw_text.text_style.font_size: 11}
+                Label{text: source_label(memories[j].source) draw_text.color: secondary draw_text.text_style.font_size: 10}
             } else {
                 if memories[j].source != memories[j + 1].source {
-                    Label{text: source_label(memories[j].source) draw_text.color: secondary draw_text.text_style.font_size: 11}
+                    Label{text: source_label(memories[j].source) draw_text.color: secondary draw_text.text_style.font_size: 10}
                 }
             }
-            GestureView{width: Fill height: Fit padding: 12 on_tap: |x, y| remove(j)
-                Label{width: Fill text: memories[j].text draw_text.color: ink draw_text.text_style.font_size: 15}
-                Label{width: Fill text: date_str(memories[j].created) draw_text.color: secondary draw_text.text_style.font_size: 11}
+            SolidView{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5} padding: Inset{top: 12 bottom: 12 left: 14 right: 8} draw_bg.color: card
+                View{width: Fill height: Fit flow: Down spacing: 4
+                    Label{width: Fill text: memories[j].text draw_text.color: ink draw_text.text_style.font_size: 15}
+                    Label{width: Fill text: date_str(memories[j].created) draw_text.color: secondary draw_text.text_style.font_size: 11}
+                }
+                GestureView{width: Fit height: Fit on_tap: |x, y| remove(j)
+                    SolidView{width: Fit height: Fit padding: Inset{top: 4 bottom: 4 left: 10 right: 10} draw_bg.color: #xf2f2f7
+                        Label{text: "×" draw_text.color: secondary draw_text.text_style.font_size: 14}
+                    }
+                }
             }
-            Hr{}
         }
     }}
-    assistant := View{width: Fill height: Fit flow: Down spacing: 6 on_render: || {
-        Label{text: "FROM THE ASSISTANT" draw_text.color: secondary draw_text.text_style.font_size: 11}
-        if agent_state == nil {
-            Label{text: "Checking…" draw_text.color: secondary draw_text.text_style.font_size: 13}
-        }
-        if agent_state == false {
-            Label{text: "No assistant on this device — pinned memory still works." draw_text.color: secondary draw_text.text_style.font_size: 13}
-        }
-        if agent_state == true {
-            Label{text: agent_summary draw_text.color: ink draw_text.text_style.font_size: 13}
-        }
-    }}
-    View{width: Fill height: Fit flow: Right spacing: 8 align: Align{y: 0.5}
-        ButtonFlat{text: "Export" height: 36 padding: Inset{left: 14 right: 14} on_click: || export_pinned()
-            draw_bg +: {border_radius: 18.0 color: blue color_hover: #x0a84ff color_down: #x0062cc border_size: 0.0}
+    RoundedView{width: Fill height: Fit flow: Down spacing: 6 padding: Inset{top: 14 bottom: 14 left: 14 right: 14} draw_bg.color: accent_bg border_radius: 14.0
+        assistant := View{width: Fill height: Fit flow: Down spacing: 4 on_render: || {
+            Label{text: "FROM THE ASSISTANT" draw_text.color: accent_dark draw_text.text_style.font_size: 10}
+            if agent_state == nil {
+                Label{text: "Checking…" draw_text.color: accent_dark draw_text.text_style.font_size: 13}
+            }
+            if agent_state == false {
+                Label{text: "No assistant on this device — pinned memory still works." draw_text.color: accent_dark draw_text.text_style.font_size: 13}
+            }
+            if agent_state == true {
+                Label{text: agent_summary draw_text.color: ink draw_text.text_style.font_size: 13}
+            }
+        }}
+    }
+    View{width: Fill height: Fit flow: Right spacing: 10 align: Align{y: 0.5}
+        ButtonFlat{text: "Export" height: 40 padding: Inset{left: 18 right: 18} on_click: || export_pinned()
+            draw_bg +: {border_radius: 20.0 color: accent color_hover: accent_dark color_down: #x0f1735 border_size: 0.0}
             draw_text +: {color: #xffffff color_hover: #xffffff color_down: #xffffff}}
         export_note := Label{width: Fill text: "" draw_text.color: secondary draw_text.text_style.font_size: 11}
     }

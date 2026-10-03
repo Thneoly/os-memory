@@ -15,10 +15,10 @@
   },
   "id": "os.memory",
   "integrity": {
-    "bundle_blake3": "d346a00f528a019699776ee3d9e7c7a463304c77ad2764f1b2aa001034b9ab8f",
+    "bundle_blake3": "a31ac02cc729a5f8cb1f420e684ba7eaaa5b8b45052fbe1fe06779ada4e32beb",
     "signature": {
       "key_id": "TheOne",
-      "value": "7d0f7367a1062a2158735aab7c718d5945895cdcc6710f7ef813f706740e6d8e23c4f0c1d139d2ae7f082098f9441c5a6c392423e73caf97f565192aacaafe02"
+      "value": "4b7579c9ee913117b468c3fccd48c6a2714266701f2a8541f6fe2053883e5a7a1215a361884f218f515fd8587e58175b5efeb1365b1683af01f74c33ae2b2b07"
     }
   },
   "name": "Memory",
